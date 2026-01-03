@@ -4,13 +4,13 @@ import time
 import uuid
 from pathlib import Path
 
-from app.core.llm.base import LLMClient, LLMExtractRequest
-from app.core.ocr_extraction import extract_text_from_file_ocr
-from app.core.prompting import inject_form_fields
-from app.core.text_extraction import extract_text_from_pdf
+from backend.core.llm.base import LLMClient, LLMExtractRequest
+from backend.core.ocr_extraction import extract_text_from_file_ocr
+from backend.core.prompting import inject_form_fields
+from backend.core.text_extraction import extract_text_from_pdf
 
-from app.schemas.bol_v1 import BolV1
-from app.core.pipeline.models import PipelineMeta, PipelineValidation, PipelineResult
+from backend.schemas.bol_v1 import BolV1
+from backend.core.pipeline.models import PipelineMeta, PipelineValidation, PipelineResult
 
 
 IMAGE_EXTS = {".png", ".jpg", ".jpeg"}

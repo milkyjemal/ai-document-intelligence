@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from app.core.llm.factory import get_llm_client
+from backend.core.llm.factory import get_llm_client
 
-from app.core.pipeline.bol_extract import extract_bol_sync
-from app.core.text_extraction import extract_text_from_pdf
+from backend.core.pipeline.bol_extract import extract_bol_sync
+from backend.core.text_extraction import extract_text_from_pdf
 
 
 PDF_PATH = Path("samples/TFF-BOL-Form.pdf")

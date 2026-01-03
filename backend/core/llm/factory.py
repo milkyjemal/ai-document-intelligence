@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from app.core.config import USE_MOCK_LLM
-from app.core.llm.base import LLMClient
-from app.core.llm.mock import MockLLMClient
-from app.core.llm.openai_client import OpenAILLMClient
+from backend.core.config import USE_MOCK_LLM
+from backend.core.llm.base import LLMClient
+from backend.core.llm.mock import MockLLMClient
+from backend.core.llm.openai_client import OpenAILLMClient
 
 
 def get_llm_client() -> LLMClient:

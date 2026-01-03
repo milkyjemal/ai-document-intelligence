@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Literal
 
-from app.schemas.bol_v1 import BolV1
+from backend.schemas.bol_v1 import BolV1
 ExtractMethod = Literal["pdf_text", "ocr", "pdf_text+ocr"]
 
 @dataclass(frozen=True)

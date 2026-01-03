@@ -6,9 +6,9 @@ from tempfile import NamedTemporaryFile
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import JSONResponse
 
-from app.core.llm.factory import get_llm_client
-from app.core.pipeline.bol_extract import extract_bol_sync
-from app.schemas.api_models import ExtractionResponse, APIValidation, APIMeta
+from backend.core.llm.factory import get_llm_client
+from backend.core.pipeline.bol_extract import extract_bol_sync
+from backend.schemas.api_models import ExtractionResponse, APIValidation, APIMeta
 
 router = APIRouter(prefix="/v1", tags=["extractions"])
 

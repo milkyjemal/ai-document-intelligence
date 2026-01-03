@@ -2,9 +2,9 @@ import json
 from typing import Any, Dict
 
 from openai import OpenAI
-from app.core.config import OPENAI_API_KEY
+from backend.core.config import OPENAI_API_KEY
 
-from app.core.llm.base import (
+from backend.core.llm.base import (
     LLMClient,
     LLMExtractRequest,
     LLMExtractResponse,

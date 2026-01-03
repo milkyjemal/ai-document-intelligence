@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app
+from backend.main import app
 
 client = TestClient(app)
 
@@ -17,7 +17,7 @@ def test_extraction_bol_v1_pdf_happy_path(monkeypatch):
         return {"text": "", "timings_ms": {"ocr_ms": 0}}
 
     monkeypatch.setattr(
-        "app.core.pipeline.bol_extract.extract_text_from_file_ocr",
+        "backend.core.pipeline.bol_extract.extract_text_from_file_ocr",
         fake_ocr,
     )
 

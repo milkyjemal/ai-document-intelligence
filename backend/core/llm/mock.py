@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from app.core.llm.base import LLMClient, LLMExtractRequest, LLMExtractResponse
+from backend.core.llm.base import LLMClient, LLMExtractRequest, LLMExtractResponse
 
 
 class MockLLMClient(LLMClient):

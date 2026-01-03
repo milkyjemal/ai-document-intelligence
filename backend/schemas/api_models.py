@@ -4,7 +4,7 @@ from typing import Literal, Optional, List, Dict
 
 from pydantic import BaseModel
 
-from app.schemas.bol_v1 import BolV1
+from backend.schemas.bol_v1 import BolV1
 
 
 class APIValidation(BaseModel):

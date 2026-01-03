@@ -106,7 +106,7 @@ USE_MOCK_LLM=0
 ### Run the API
 
 ```bash
-uvicorn app.main:app --reload
+uvicorn backend.main:app --reload
 ```
 
 - **Swagger UI:** http://127.0.0.1:8000/docs
@@ -241,7 +241,7 @@ This ensures:
 ## Project Structure
 
 ```text
-app/
+backend/
   api/            # FastAPI routes
   core/           # pipeline, LLM, extraction logic
   schemas/        # Pydantic models
