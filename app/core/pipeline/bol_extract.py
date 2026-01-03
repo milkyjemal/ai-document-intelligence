@@ -1,9 +1,7 @@
-from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import Any, Dict, List, Literal, Optional
 import uuid
-import time
+from time import perf_counter
 
 from pydantic import ValidationError
 
@@ -53,15 +51,15 @@ def extract_bol_sync(
     3) warnings/errors shaping
     """
     request_id = uuid.uuid4().hex
-    t0 = time.perf_counter()
+    t0 = perf_counter()
 
     # LLM extraction timing
-    t_llm0 = time.perf_counter()
+    t_llm0 = perf_counter()
     llm_resp = llm.extract_json(LLMExtractRequest(schema=schema, text=text))
-    t_llm1 = time.perf_counter()
+    t_llm1 = perf_counter()
 
     # Validation timing
-    t_val0 = time.perf_counter()
+    t_val0 = perf_counter()
     try:
         data = BolV1.model_validate(llm_resp.json)
         errors: list[str] = []
@@ -71,7 +69,7 @@ def extract_bol_sync(
         is_valid = False
         # keep errors readable
         errors = [f"{err['loc']}: {err['msg']}" for err in e.errors()]
-    t_val1 = time.perf_counter()
+    t_val1 = perf_counter()
 
     warnings: list[str] = []
     if data is not None:
@@ -83,7 +81,7 @@ def extract_bol_sync(
     timings_ms = {
         "llm_extract_ms": int((t_llm1 - t_llm0) * 1000),
         "validation_ms": int((t_val1 - t_val0) * 1000),
-        "total_ms": int((time.perf_counter() - t0) * 1000),
+        "total_ms": int((perf_counter() - t0) * 1000),
     }
 
     meta = PipelineMeta(

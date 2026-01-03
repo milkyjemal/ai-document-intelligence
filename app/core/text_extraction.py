@@ -1,10 +1,8 @@
-from __future__ import annotations
-
-import time
+from time import perf_counter
 from pathlib import Path
 from typing import Dict, List
 
-import fitz  # PyMuPDF
+from fitz import open
 
 
 def extract_text_from_pdf(path: str) -> Dict[str, object]:
@@ -12,9 +10,9 @@ def extract_text_from_pdf(path: str) -> Dict[str, object]:
     if not pdf_path.exists():
         raise FileNotFoundError(f"PDF not found: {path}")
 
-    t0 = time.perf_counter()
+    t0 = perf_counter()
 
-    doc = fitz.open(pdf_path)
+    doc = open(pdf_path)
     page_texts: List[str] = []
     form_fields: Dict[str, str] = {}
 
@@ -38,5 +36,5 @@ def extract_text_from_pdf(path: str) -> Dict[str, object]:
         "method": "pdf_text",
         "page_texts": page_texts,
         "form_fields": form_fields,
-        "timings_ms": {"text_extraction_ms": int((time.perf_counter() - t0) * 1000)},
+        "timings_ms": {"text_extraction_ms": int((perf_counter() - t0) * 1000)},
     }

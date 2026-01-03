@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from pathlib import Path
 
 # from app.core.llm.mock import MockLLMClient
@@ -13,10 +11,10 @@ PDF_PATH = Path("samples/TFF-BOL-Form.pdf")
 
 def main() -> None:
     # 1) Extract text from PDF
-    tex = extract_text_from_pdf(str(PDF_PATH))
-    form_fields = tex.get("form_fields") or {}
-    text = tex.get("text")
-    page_count = tex.get("page_count")
+    pdfText = extract_text_from_pdf(str(PDF_PATH))
+    form_fields = pdfText.get("form_fields") or {}
+    text = pdfText.get("text")
+    page_count = pdfText.get("page_count")
     if form_fields:
         # Only include fields that are not "Off" to reduce noise
         interesting = {k: v for k, v in form_fields.items() if v != "Off"}
@@ -25,7 +23,7 @@ def main() -> None:
             fields_block = "\n".join([f"- {k}: {v}" for k, v in sorted(interesting.items())])
             text = "FORM FIELDS:\n" + fields_block + "\n\n" + text
 
-    # 2) Mock LLM
+    # 2) LLM (OpenAI)
     # llm = MockLLMClient()
     llm = OpenAILLMClient()
     # 3) Run pipeline
