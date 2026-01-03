@@ -24,7 +24,10 @@ RUN pip install --no-cache-dir \
     pymupdf \
     pydantic \
     python-dotenv \
-    openai
+    openai \
+    pytesseract \
+    pdf2image \
+    pillow
 
 # ---- Copy application code only ----
 COPY app /app/app
