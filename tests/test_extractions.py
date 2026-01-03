@@ -11,15 +11,22 @@ FIXTURE = Path(__file__).parent / "fixtures" / "test_bol.pdf"
 
 
 @pytest.mark.integration
-def test_extraction_bol_v1_pdf_happy_path():
+def test_extraction_bol_v1_pdf_happy_path(monkeypatch):
+    # CI-safe: prevent real OCR/pdf2image from running (avoids needing poppler/pdfinfo)
+    def fake_ocr(*args, **kwargs):
+        return {"text": "", "timings_ms": {"ocr_ms": 0}}
+
+    monkeypatch.setattr(
+        "app.core.pipeline.bol_extract.extract_text_from_file_ocr",
+        fake_ocr,
+    )
+
     with FIXTURE.open("rb") as f:
-        files = {"file": ("filled_bol.pdf", f, "application/pdf")}
+        files = {"file": ("test_bol.pdf", f, "application/pdf")}
         data = {"schema_name": "bol_v1"}
 
         r = client.post("/v1/extractions", data=data, files=files)
 
-    # Accept either 200 or 422 depending on how strict your schema/prompt is,
-    # but for a filled fixture we EXPECT 200 in a good system.
     assert r.status_code == 200, r.text
 
     body = r.json()
@@ -29,7 +36,8 @@ def test_extraction_bol_v1_pdf_happy_path():
     # Validate meta basics
     assert "meta" in body
     assert "request_id" in body["meta"]
-    assert body["meta"]["method"] in ("pdf_text", "ocr", "pdf_text+ocr")
+    # Should be pdf_text in this test; allow pdf_text+ocr if your pipeline still marks it
+    assert body["meta"]["method"] in ("pdf_text", "pdf_text+ocr")
 
     # Validate extracted data basics
     assert body["data"] is not None
