@@ -1,7 +1,7 @@
 from pathlib import Path
 
-# from app.core.llm.mock import MockLLMClient
-from app.core.llm.openai_client import OpenAILLMClient
+from app.core.llm.factory import get_llm_client
+
 from app.core.pipeline.bol_extract import extract_bol_sync
 from app.core.text_extraction import extract_text_from_pdf
 
@@ -23,9 +23,8 @@ def main() -> None:
             fields_block = "\n".join([f"- {k}: {v}" for k, v in sorted(interesting.items())])
             text = "FORM FIELDS:\n" + fields_block + "\n\n" + text
 
-    # 2) LLM (OpenAI)
-    # llm = MockLLMClient()
-    llm = OpenAILLMClient()
+    # 2) LLM (via factory)
+    llm = get_llm_client()
     # 3) Run pipeline
     result = extract_bol_sync(
         schema="bol_v1",

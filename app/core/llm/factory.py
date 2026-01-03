@@ -12,6 +12,7 @@ def get_llm_client() -> LLMClient:
     - Mock for tests / CI
     - OpenAI for real runs
     """
+
     if USE_MOCK_LLM:
         return MockLLMClient()
 

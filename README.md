@@ -4,12 +4,17 @@ AI document extraction service that converts logistics documents (Bill of Lading
 
 Built with FastAPI, Pydantic, OpenAI (optional), and Docker.
 
+This repository also includes a **TypeScript / Next.js frontend** (in `web/`) that provides a polished UI for uploading PDFs and inspecting extraction output.
+
+Read more: [`web/README.md`](web/README.md)
+
 ## Table of Contents
 
 - [Features](#features)
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
 - [Run Locally](#run-locally)
+- [Frontend (Next.js)](#frontend-nextjs)
 - [API Usage](#api-usage)
 - [Testing](#testing)
 - [Docker](#docker)
@@ -60,6 +65,7 @@ Design principle: the LLM is an interchangeable adapter, not the core logic.
 ## Tech Stack
 
 - **API:** FastAPI
+- **Frontend:** Next.js (TypeScript, App Router) + Tailwind CSS
 - **Validation:** Pydantic v2
 - **PDF parsing:** PyMuPDF
 - **LLM:** OpenAI (optional) / MockLLM
@@ -94,6 +100,34 @@ uvicorn app.main:app --reload
 
 - **Swagger UI:** http://127.0.0.1:8000/docs
 - **Health check:** http://127.0.0.1:8000/health
+
+## Frontend (Next.js)
+
+The UI lives in the `web/` folder and talks to the FastAPI backend through Next.js API routes (proxy) to avoid browser CORS issues.
+
+### Configure
+
+Create `web/.env.local`:
+
+```bash
+BACKEND_URL=http://127.0.0.1:8000
+```
+
+You can also copy the example:
+
+```bash
+cp web/.env.local.example web/.env.local
+```
+
+### Run the frontend
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+Open http://localhost:3000
 
 ## API Usage
 
@@ -188,6 +222,7 @@ app/
   schemas/        # Pydantic models
 tests/
   fixtures/       # sample PDFs
+web/              # Next.js frontend (TypeScript)
 .github/
   workflows/ci.yml
 Dockerfile

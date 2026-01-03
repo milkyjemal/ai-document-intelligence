@@ -16,6 +16,11 @@ ruff_cache/
 # Samples (optional)
 samples/
 
+# Next.js (web)
+web/node_modules/
+web/.next/
+web/out/
+web/.env*
+
 # Git
 .git
-.gitignore
