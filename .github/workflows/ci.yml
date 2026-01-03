@@ -38,3 +38,13 @@ jobs:
 
       - name: Docker build
         run: docker build -t ai-document-intelligence:ci .
+
+      - name: Run container smoke test
+        run: |
+          docker run -d --name api -p 8000:8000 ai-document-intelligence:ci
+          sleep 2
+          curl -f http://127.0.0.1:8000/health
+          docker logs api
+          docker stop api
+          docker rm api
+
