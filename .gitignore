@@ -13,8 +13,7 @@ ruff_cache/
 # OS junk
 .DS_Store
 
-# Tests & samples (optional)
-tests/
+# Samples (optional)
 samples/
 
 # Git
