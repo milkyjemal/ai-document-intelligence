@@ -19,17 +19,17 @@ Built with FastAPI, Pydantic, OpenAI (optional), and Docker.
 - [Future Improvements](#future-improvements)
 - [Author](#author)
 
-## Features
+## ✨ Features
 
-- **PDF Bill of Lading extraction**
-- **LLM-based structured parsing** (OpenAI or mock)
-- **Form-field + text extraction** (AcroForm-aware)
-- **Strict validation** with Pydantic
-- **Warnings vs errors** (enterprise-style)
-- **Mock LLM toggle** for tests / CI (no API calls)
-- **Dockerized** (slim image)
-- **Pytest integration tests**
-- **GitHub Actions CI**
+- 📄 **PDF Bill of Lading extraction**
+- 🧠 **LLM-based structured parsing** (OpenAI or mock)
+- 🧾 **Form-field + text extraction** (AcroForm-aware)
+- ✅ **Strict validation** (Pydantic)
+- ⚠️ **Warnings vs errors** (enterprise-style)
+- 🔁 **Mock LLM toggle for tests / CI** (no API calls)
+- 🐳 **Dockerized** (slim image)
+- 🧪 **Pytest integration tests** (comprehensive suite with mock LLM)
+- 🤖 **GitHub Actions CI**
 
 ## Architecture
 
