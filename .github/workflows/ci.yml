@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      USE_MOCK_LLM: "1"
+      # No OPENAI_API_KEY needed in CI because we force mock
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install fastapi uvicorn python-multipart pymupdf pydantic python-dotenv openai
+          pip install pytest httpx
+
+      - name: Run tests
+        run: |
+          python -m pytest -q
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Docker build
+        run: docker build -t ai-document-intelligence:ci .

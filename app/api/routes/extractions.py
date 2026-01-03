@@ -7,7 +7,7 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 
 from app.core.text_extraction import extract_text_from_pdf
 from app.core.pipeline.bol_extract import extract_bol_sync
-from app.core.llm.openai_client import OpenAILLMClient
+from app.core.llm.factory import get_llm_client
 from app.schemas.api_models import ExtractionResponse, APIValidation, APIMeta
 from fastapi.responses import JSONResponse
 from app.core.prompting import inject_form_fields
@@ -17,17 +17,17 @@ logger = logging.getLogger("ai-document-intelligence")
 router = APIRouter(prefix="/v1", tags=["extractions"])
 
 # Create once, reuse across requests
-LLM = OpenAILLMClient()
+LLM = get_llm_client()
 
 MAX_UPLOAD_BYTES = 10_000_000  # 10 MB
 
 
 @router.post("/extractions", response_model=ExtractionResponse)
 async def create_extraction(
-    schema: str = Form("bol_v1"),
+    schema_name: str = Form("bol_v1"),
     file: UploadFile = File(...),
 ) -> ExtractionResponse:
-    if schema != "bol_v1":
+    if schema_name != "bol_v1":
         raise HTTPException(status_code=400, detail="Unsupported schema")
 
     if file.content_type not in ("application/pdf", "application/octet-stream"):

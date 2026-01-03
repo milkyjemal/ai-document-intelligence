@@ -1,8 +1,22 @@
-.env
+# Python
 .venv
-test*
-__pycache__
+__pycache__/
 *.pyc
-*.pdf
+.pytest_cache/
+.mypy_cache/
+ruff_cache/
+*.log
+
+# Environment / secrets
+.env
+
+# OS junk
 .DS_Store
-.vscode/
+
+# Tests & samples (optional)
+tests/
+samples/
+
+# Git
+.git
+.gitignore
