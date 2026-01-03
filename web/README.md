@@ -8,6 +8,10 @@ The UI provides a polished workflow to:
 - Submit an extraction request
 - Inspect extracted JSON, validation errors/warnings, and request metadata
 
+## Overview
+
+This web interface provides a user-friendly way to interact with the AI Document Intelligence backend. It allows users to upload PDF documents, initiate extraction processes, and view the structured JSON output along with any validation feedback. Take a look at the interface screenshot below:
+
 ![alt text](public/assets/ai_doc_intelligence.png)
 
 ## Architecture
