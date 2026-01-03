@@ -1,10 +1,10 @@
 # AI Document Intelligence
 
-AI document extraction service that converts logistics documents (Bill of Lading PDFs) into validated, structured JSON using LLMs.
+AI document extraction service that converts logistics documents (Bill of Lading PDFs and images) into validated, structured JSON using LLMs.
 
 Built with FastAPI, Pydantic, OpenAI (optional), and Docker.
 
-This repository also includes a **TypeScript / Next.js frontend** (in `web/`) that provides a polished UI for uploading PDFs and inspecting extraction output.
+This repository also includes a **TypeScript / Next.js frontend** (in `web/`) that provides a polished UI for uploading PDFs/images and inspecting extraction output.
 
 Read more: [`web/README.md`](web/README.md)
 
@@ -27,8 +27,10 @@ Read more: [`web/README.md`](web/README.md)
 ## ✨ Features
 
 - 📄 **PDF Bill of Lading extraction**
+- 🖼️ **Image upload support** (PNG/JPG/JPEG)
 - 🧠 **LLM-based structured parsing** (OpenAI or mock)
 - 🧾 **Form-field + text extraction** (AcroForm-aware)
+- 🔎 **OCR extraction** for images and low-text PDFs (fallback)
 - ✅ **Strict validation** (Pydantic)
 - ⚠️ **Warnings vs errors** (enterprise-style)
 - 🔁 **Mock LLM toggle for tests / CI** (no API calls)
@@ -46,6 +48,9 @@ FastAPI endpoint
   |
   v
 Text extraction (PDF text + form fields)
+  |
+  v
+OCR (images or PDF fallback)
   |
   v
 Prompt assembly
@@ -68,6 +73,7 @@ Design principle: the LLM is an interchangeable adapter, not the core logic.
 - **Frontend:** Next.js (TypeScript, App Router) + Tailwind CSS
 - **Validation:** Pydantic v2
 - **PDF parsing:** PyMuPDF
+- **OCR:** Tesseract (via `pytesseract`), `pdf2image`, Pillow
 - **LLM:** OpenAI (optional) / MockLLM
 - **Tests:** pytest
 - **CI:** GitHub Actions
@@ -80,8 +86,13 @@ Design principle: the LLM is an interchangeable adapter, not the core logic.
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install fastapi uvicorn python-multipart pymupdf pydantic python-dotenv openai
+pip install fastapi uvicorn python-multipart pymupdf pydantic python-dotenv openai pillow pytesseract pdf2image
 ```
+
+OCR dependencies (required for image uploads / OCR fallback):
+
+- **macOS (Homebrew):** `brew install tesseract poppler`
+- **Debian/Ubuntu:** `apt-get install tesseract-ocr poppler-utils`
 
 ### Configuration
 
@@ -139,6 +150,14 @@ curl -X POST "http://127.0.0.1:8000/v1/extractions" \
   -F "file=@samples/TFF-BOL-Form.pdf;type=application/pdf"
 ```
 
+Image uploads are also supported:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/v1/extractions" \
+  -F "schema_name=bol_v1" \
+  -F "file=@samples/sample_bol.jpg;type=image/jpeg"
+```
+
 ### Example Response (trimmed)
 
 ```json
@@ -175,6 +194,10 @@ curl -X POST "http://127.0.0.1:8000/v1/extractions" \
 }
 ```
 
+Notes:
+
+- `meta.method` may be `pdf_text`, `ocr`, or `pdf_text+ocr` depending on the input and fallback behavior.
+
 ## Testing
 
 Tests do not call OpenAI (mock LLM enforced).
@@ -196,6 +219,8 @@ docker build -t ai-document-intelligence .
 ```bash
 docker run -p 8000:8000 --env-file .env ai-document-intelligence
 ```
+
+The Docker image includes OCR runtime dependencies (Tesseract + Poppler) to support image uploads and PDF OCR fallback.
 
 ## Mock vs Real LLM
 
@@ -247,7 +272,7 @@ This is intentionally not a toy project.
 - Webhooks
 - Multiple document schemas
 - Rate limiting & authentication
-- OCR fallback pipeline
+- Improved OCR fallback heuristics (multi-page OCR, better detection)
 - Frontend playground
 
 ## Author
