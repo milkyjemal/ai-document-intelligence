@@ -11,9 +11,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
   && rm -rf /var/lib/apt/lists/*
 
-# Install Python deps
-COPY pyproject.toml poetry.lock* requirements.txt* /app/
-
 # If you use requirements.txt:
 RUN if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
 
