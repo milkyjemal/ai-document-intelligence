@@ -6,19 +6,25 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# System deps (PyMuPDF sometimes needs these; keep minimal)
+# ---- System dependencies (minimal) ----
+# PyMuPDF needs some system libs; keep only what we need
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
+    libglib2.0-0 \
+    libgl1 \
+    ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
-# If you use requirements.txt:
-RUN if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
+# ---- Install Python dependencies ----
+RUN pip install --no-cache-dir \
+    fastapi \
+    uvicorn \
+    python-multipart \
+    pymupdf \
+    pydantic \
+    python-dotenv \
+    openai
 
-# If you don't have requirements.txt yet, do a simple editable install style:
-# We'll install runtime deps directly (safe for MVP).
-RUN pip install --no-cache-dir fastapi uvicorn python-multipart pymupdf openai python-dotenv
-
-# Copy application code
+# ---- Copy application code only ----
 COPY app /app/app
 
 EXPOSE 8000
