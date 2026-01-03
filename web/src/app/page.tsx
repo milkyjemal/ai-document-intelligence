@@ -26,7 +26,7 @@ export default function Home() {
 
   async function run() {
     if (!file) {
-      setError("Please choose a PDF file first.");
+      setError("Please choose a PDF or image file first.");
       return;
     }
 
