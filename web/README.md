@@ -8,6 +8,8 @@ The UI provides a polished workflow to:
 - Submit an extraction request
 - Inspect extracted JSON, validation errors/warnings, and request metadata
 
+![alt text](public/assets/ai_doc_intelligence.png)
+
 ## Architecture
 
 The frontend talks to the backend through **Next.js API routes** (a server-side proxy). This avoids browser CORS issues and keeps backend details configurable via environment variables.
