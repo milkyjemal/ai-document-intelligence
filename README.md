@@ -1,98 +1,113 @@
-AI Document Intelligence – Bill of Lading Extraction API
+# AI Document Intelligence
 
-A production-grade AI document extraction service that converts logistics documents (Bill of Lading PDFs) into validated, structured JSON using LLMs — with a clean pipeline, testability, and CI.
+AI document extraction service that converts logistics documents (Bill of Lading PDFs) into validated, structured JSON using LLMs.
 
 Built with FastAPI, Pydantic, OpenAI (optional), and Docker.
 
-✨ Features
+## Table of Contents
 
-📄 PDF Bill of Lading extraction
+- [Features](#features)
+- [Architecture](#architecture)
+- [Tech Stack](#tech-stack)
+- [Run Locally](#run-locally)
+- [API Usage](#api-usage)
+- [Testing](#testing)
+- [Docker](#docker)
+- [Mock vs Real LLM](#mock-vs-real-llm)
+- [Project Structure](#project-structure)
+- [Why This Project Matters](#why-this-project-matters)
+- [Future Improvements](#future-improvements)
+- [Author](#author)
 
-🧠 LLM-based structured parsing (OpenAI or mock)
+## Features
 
-🧾 Form-field + text extraction (AcroForm-aware)
+- **PDF Bill of Lading extraction**
+- **LLM-based structured parsing** (OpenAI or mock)
+- **Form-field + text extraction** (AcroForm-aware)
+- **Strict validation** with Pydantic
+- **Warnings vs errors** (enterprise-style)
+- **Mock LLM toggle** for tests / CI (no API calls)
+- **Dockerized** (slim image)
+- **Pytest integration tests**
+- **GitHub Actions CI**
 
-✅ Strict validation with Pydantic
+## Architecture
 
-⚠️ Warnings vs errors (enterprise-style)
-
-🔁 Mock LLM toggle for tests / CI (no API calls)
-
-🐳 Dockerized (slim image)
-
-🧪 Pytest integration tests
-
-🤖 GitHub Actions CI
-
-🏗️ Architecture Overview
+```
 Client
-  │
-  ▼
-FastAPI Endpoint
-  │
-  ▼
-Text Extraction
-(PDF text + form fields)
-  │
-  ▼
-Prompt Assembly
-  │
-  ▼
-LLM Client
-(Mock or OpenAI)
-  │
-  ▼
-Pydantic Validation
-  │
-  ▼
-Structured JSON Response
+  |
+  v
+FastAPI endpoint
+  |
+  v
+Text extraction (PDF text + form fields)
+  |
+  v
+Prompt assembly
+  |
+  v
+LLM client (Mock or OpenAI)
+  |
+  v
+Pydantic validation
+  |
+  v
+Structured JSON response
+```
 
+Design principle: the LLM is an interchangeable adapter, not the core logic.
 
-Design principle:
-The LLM is an interchangeable adapter, not the core logic.
+## Tech Stack
 
-📦 Tech Stack
+- **API:** FastAPI
+- **Validation:** Pydantic v2
+- **PDF parsing:** PyMuPDF
+- **LLM:** OpenAI (optional) / MockLLM
+- **Tests:** pytest
+- **CI:** GitHub Actions
+- **Container:** Docker (slim image)
 
-API: FastAPI
+## Run Locally
 
-Validation: Pydantic v2
+### Setup
 
-PDF Parsing: PyMuPDF
-
-LLM: OpenAI (optional) / MockLLM
-
-Tests: pytest
-
-CI: GitHub Actions
-
-Container: Docker (slim image)
-
-🚀 Running Locally
-Setup environment
+```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install fastapi uvicorn python-multipart pymupdf pydantic python-dotenv openai
+```
 
+### Configuration
 
-Create .env:
+Create a `.env` file:
 
+```bash
 OPENAI_API_KEY=sk-...
 USE_MOCK_LLM=0
+```
 
-Run the API
+### Run the API
+
+```bash
 uvicorn app.main:app --reload
+```
 
+- **Swagger UI:** http://127.0.0.1:8000/docs
+- **Health check:** http://127.0.0.1:8000/health
 
-Swagger UI → http://127.0.0.1:8000/docs
+## API Usage
 
-Health check → http://127.0.0.1:8000/health
+### Example Request (curl)
 
-📤 Example Request (curl)
+```bash
 curl -X POST "http://127.0.0.1:8000/v1/extractions" \
   -F "schema_name=bol_v1" \
   -F "file=@samples/TFF-BOL-Form.pdf;type=application/pdf"
+```
 
-📥 Example Response (trimmed)
+### Example Response (trimmed)
+
+```json
 {
   "status": "completed",
   "job_id": null,
@@ -124,39 +139,49 @@ curl -X POST "http://127.0.0.1:8000/v1/extractions" \
     "page_count": 2
   }
 }
+```
 
-🧪 Running Tests
+## Testing
 
-Tests do not call OpenAI (Mock LLM enforced).
+Tests do not call OpenAI (mock LLM enforced).
 
+```bash
 USE_MOCK_LLM=1 python -m pytest -q
+```
 
-🐳 Docker
-Build image
+## Docker
+
+### Build image
+
+```bash
 docker build -t ai-document-intelligence .
+```
 
-Run container
+### Run container
+
+```bash
 docker run -p 8000:8000 --env-file .env ai-document-intelligence
+```
 
-🔁 Mock vs Real LLM
+## Mock vs Real LLM
 
 Controlled via environment variable:
 
+```bash
 USE_MOCK_LLM=1   # tests / CI
 USE_MOCK_LLM=0   # real OpenAI
-
+```
 
 This ensures:
 
-CI is fast and free
+- **CI is fast and free**
+- **No flaky AI tests**
+- **No API cost in tests**
+- **Same codebase for prod & CI**
 
-No flaky AI tests
+## Project Structure
 
-No API cost in tests
-
-Same codebase for prod & CI
-
-📁 Project Structure
+```text
 app/
   api/            # FastAPI routes
   core/           # pipeline, LLM, extraction logic
@@ -167,38 +192,30 @@ tests/
   workflows/ci.yml
 Dockerfile
 README.md
+```
 
-🧠 Why This Project Matters
+## Why This Project Matters
 
 This project demonstrates:
 
-Real-world AI engineering patterns
-
-Clean separation of concerns
-
-LLM reliability through validation
-
-Deterministic testing strategy
-
-Production-ready API design
+- Real-world AI engineering patterns
+- Clean separation of concerns
+- LLM reliability through validation
+- Deterministic testing strategy
+- Production-ready API design
 
 This is intentionally not a toy project.
 
-🔮 Future Improvements
+## Future Improvements
 
-Async job queue
+- Async job queue
+- Webhooks
+- Multiple document schemas
+- Rate limiting & authentication
+- OCR fallback pipeline
+- Frontend playground
 
-Webhooks
-
-Multiple document schemas
-
-Rate limiting & authentication
-
-OCR fallback pipeline
-
-Frontend playground
-
-👤 Author
+## Author
 
 Milky Omer
 Senior Backend Engineer | AI-focused Systems
