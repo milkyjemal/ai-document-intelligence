@@ -29,7 +29,7 @@ def test_extraction_bol_v1_pdf_happy_path():
     # Validate meta basics
     assert "meta" in body
     assert "request_id" in body["meta"]
-    assert body["meta"]["method"] in ("pdf_text", "ocr", "raw_text")
+    assert body["meta"]["method"] in ("pdf_text", "ocr", "pdf_text+ocr")
 
     # Validate extracted data basics
     assert body["data"] is not None

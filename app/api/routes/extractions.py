@@ -4,64 +4,58 @@ import os
 from tempfile import NamedTemporaryFile
 
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
-
-from app.core.text_extraction import extract_text_from_pdf
-from app.core.pipeline.bol_extract import extract_bol_sync
-from app.core.llm.factory import get_llm_client
-from app.schemas.api_models import ExtractionResponse, APIValidation, APIMeta
 from fastapi.responses import JSONResponse
-from app.core.prompting import inject_form_fields
-import logging
 
-logger = logging.getLogger("ai-document-intelligence")
+from app.core.llm.factory import get_llm_client
+from app.core.pipeline.bol_extract import extract_bol_sync
+from app.schemas.api_models import ExtractionResponse, APIValidation, APIMeta
+
 router = APIRouter(prefix="/v1", tags=["extractions"])
 
-# Create once, reuse across requests
 LLM = get_llm_client()
 
-MAX_UPLOAD_BYTES = 10_000_000  # 10 MB
+ALLOWED_CONTENT_TYPES = {
+    "application/pdf",
+    "image/png",
+    "image/jpeg",
+}
+
+MAX_UPLOAD_MB = 10
 
 
 @router.post("/extractions", response_model=ExtractionResponse)
 async def create_extraction(
     schema_name: str = Form("bol_v1"),
     file: UploadFile = File(...),
-) -> ExtractionResponse:
+):
     if schema_name != "bol_v1":
         raise HTTPException(status_code=400, detail="Unsupported schema")
 
-    if file.content_type not in ("application/pdf", "application/octet-stream"):
-        raise HTTPException(status_code=400, detail="Only PDF is supported for now")
+    if file.content_type not in ALLOWED_CONTENT_TYPES:
+        raise HTTPException(status_code=400, detail="Only PDF, PNG, or JPG images are supported")
 
-    pdf_path = None
+    tmp_path = None
     try:
         content = await file.read()
-        if len(content) > MAX_UPLOAD_BYTES:
-            raise HTTPException(status_code=413, detail="File too large")
+        if not content:
+            raise HTTPException(status_code=400, detail="Empty file")
 
-        with NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+        if len(content) > MAX_UPLOAD_MB * 1024 * 1024:
+            raise HTTPException(status_code=413, detail="File too large (max 10MB)")
+
+        suffix = os.path.splitext(file.filename or "")[1].lower()
+        if suffix not in {".pdf", ".png", ".jpg", ".jpeg"}:
+            # Fallback: infer suffix from content-type
+            suffix = ".pdf" if file.content_type == "application/pdf" else ".jpg"
+
+        with NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
             tmp.write(content)
-            pdf_path = tmp.name
-
-        tex = extract_text_from_pdf(pdf_path)
-
-        text = inject_form_fields(tex["text"], tex.get("form_fields") or {})
+            tmp_path = tmp.name
 
         result = extract_bol_sync(
             schema="bol_v1",
-            text=text,
+            file_path=tmp_path,
             llm=LLM,
-            method="pdf_text",
-            page_count=tex.get("page_count"),
-        )
-
-        logger.info(
-            "extraction_completed request_id=%s valid=%s method=%s pages=%s llm_ms=%s",
-            result.meta.request_id,
-            result.validation.is_valid,
-            result.meta.method,
-            result.meta.page_count,
-            result.meta.timings_ms.get("llm_extract_ms"),
         )
 
         resp = ExtractionResponse(
@@ -89,8 +83,8 @@ async def create_extraction(
         )
 
     finally:
-        if pdf_path:
+        if tmp_path:
             try:
-                os.unlink(pdf_path)
+                os.unlink(tmp_path)
             except OSError:
                 pass

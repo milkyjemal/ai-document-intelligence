@@ -9,6 +9,8 @@ WORKDIR /app
 # ---- System dependencies (minimal) ----
 # PyMuPDF needs some system libs; keep only what we need
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    tesseract-ocr \
+    poppler-utils \
     libglib2.0-0 \
     libgl1 \
     ca-certificates \

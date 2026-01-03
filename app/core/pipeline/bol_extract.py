@@ -1,88 +1,86 @@
-from dataclasses import dataclass
-from typing import Any, Dict, List, Literal, Optional
-import uuid
-from time import perf_counter
+from __future__ import annotations
 
-from pydantic import ValidationError
+import time
+import uuid
+from pathlib import Path
 
 from app.core.llm.base import LLMClient, LLMExtractRequest
+from app.core.ocr_extraction import extract_text_from_file_ocr
+from app.core.prompting import inject_form_fields
+from app.core.text_extraction import extract_text_from_pdf
+
 from app.schemas.bol_v1 import BolV1
+from app.core.pipeline.models import PipelineMeta, PipelineValidation, PipelineResult
 
 
-ExtractMethod = Literal["pdf_text", "ocr", "raw_text"]
+IMAGE_EXTS = {".png", ".jpg", ".jpeg"}
 
 
-@dataclass(frozen=True)
-class PipelineMeta:
-    request_id: str
-    method: ExtractMethod
-    page_count: Optional[int]
-    timings_ms: Dict[str, int]
-
-
-@dataclass(frozen=True)
-class PipelineValidation:
-    is_valid: bool
-    errors: List[str]
-    warnings: List[str]
-
-
-@dataclass(frozen=True)
-class ExtractBolResult:
-    status: Literal["completed"]
-    job_id: None
-    data: Optional[BolV1]
-    validation: PipelineValidation
-    meta: PipelineMeta
+def _is_image(path: str) -> bool:
+    return Path(path).suffix.lower() in IMAGE_EXTS
 
 
 def extract_bol_sync(
     *,
-    schema: Literal["bol_v1"],
-    text: str,
+    schema: str,
+    file_path: str,
     llm: LLMClient,
-    method: ExtractMethod = "raw_text",
-    page_count: Optional[int] = None,
-) -> ExtractBolResult:
+) -> PipelineResult:
     """
-    Orchestrates:
-    1) LLM extraction -> dict
-    2) Pydantic validation -> BolV1
-    3) warnings/errors shaping
+    Pipeline owns extraction method decision:
+      - Image => OCR only
+      - PDF => try pdf_text (+ form fields) first, then OCR fallback if needed
     """
     request_id = uuid.uuid4().hex
-    t0 = perf_counter()
+    t0_total = time.perf_counter()
 
-    # LLM extraction timing
-    t_llm0 = perf_counter()
+    method = "unknown"
+    page_count = None
+    timings_ms: dict[str, int] = {}
+
+    # 1) Extract text (PDF text first OR OCR)
+    if _is_image(file_path):
+        # Image => OCR
+        ocr = extract_text_from_file_ocr(file_path)
+        text = ocr["text"]
+        method = "ocr"
+        timings_ms.update(ocr.get("timings_ms", {}))
+
+    else:
+        # PDF => try text extraction first
+        tex = extract_text_from_pdf(file_path)
+        page_count = tex.get("page_count")
+        timings_ms.update(tex.get("timings_ms", {}))
+        method = tex.get("method", "pdf_text")
+
+        text = inject_form_fields(tex.get("text", ""), tex.get("form_fields") or {})
+
+        # OCR fallback heuristic (MVP)
+        # If text is too short, OCR the first page and prepend it.
+        if len(text.strip()) < 300:
+            ocr = extract_text_from_file_ocr(file_path, pages=[1])
+            text = ocr["text"] + "\n\n" + text
+            method = "pdf_text+ocr"
+            timings_ms.update(ocr.get("timings_ms", {}))
+
+    # 2) LLM extract
+    t0_llm = time.perf_counter()
     llm_resp = llm.extract_json(LLMExtractRequest(schema=schema, text=text))
-    t_llm1 = perf_counter()
+    timings_ms["llm_extract_ms"] = int((time.perf_counter() - t0_llm) * 1000)
 
-    # Validation timing
-    t_val0 = perf_counter()
+    # 3) Validate
+    t0_val = time.perf_counter()
+    validation = PipelineValidation(is_valid=True, errors=[], warnings=[])
+    data = None
+
     try:
         data = BolV1.model_validate(llm_resp.json)
-        errors: list[str] = []
-        is_valid = True
-    except ValidationError as e:
-        data = None
-        is_valid = False
-        # keep errors readable
-        errors = [f"{err['loc']}: {err['msg']}" for err in e.errors()]
-    t_val1 = perf_counter()
+    except Exception as e:
+        validation.is_valid = False
+        validation.errors.append(str(e))
 
-    warnings: list[str] = []
-    if data is not None:
-        if not data.line_items:
-            warnings.append("line_items is empty")
-        if data.bol_number == "UNKNOWN":
-            warnings.append("bol_number is UNKNOWN")
-
-    timings_ms = {
-        "llm_extract_ms": int((t_llm1 - t_llm0) * 1000),
-        "validation_ms": int((t_val1 - t_val0) * 1000),
-        "total_ms": int((perf_counter() - t0) * 1000),
-    }
+    timings_ms["validation_ms"] = int((time.perf_counter() - t0_val) * 1000)
+    timings_ms["total_ms"] = int((time.perf_counter() - t0_total) * 1000)
 
     meta = PipelineMeta(
         request_id=request_id,
@@ -91,10 +89,10 @@ def extract_bol_sync(
         timings_ms=timings_ms,
     )
 
-    validation = PipelineValidation(
-        is_valid=is_valid,
-        errors=errors,
-        warnings=warnings,
+    return PipelineResult(
+        status="completed",
+        job_id=None,
+        data=data if validation.is_valid else None,
+        validation=validation,
+        meta=meta,
     )
-
-    return ExtractBolResult(status="completed", job_id=None, data=data, validation=validation, meta=meta)

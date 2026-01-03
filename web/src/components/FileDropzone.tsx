@@ -9,6 +9,8 @@ type Props = {
   onChange: (file: File | null) => void;
 };
 
+const DEFAULT_ACCEPT = "application/pdf,image/png,image/jpeg,.pdf,.png,.jpg,.jpeg";
+
 function formatBytes(bytes: number): string {
   const units = ["B", "KB", "MB", "GB"];
   let value = bytes;
@@ -21,7 +23,7 @@ function formatBytes(bytes: number): string {
 }
 
 export function FileDropzone({
-  accept = "application/pdf",
+  accept = DEFAULT_ACCEPT,
   maxBytes = 10_000_000,
   file,
   onChange,
@@ -40,9 +42,27 @@ export function FileDropzone({
       return true;
     }
 
-    if (accept && next.type && !accept.split(",").includes(next.type)) {
-      setError("Only PDF files are supported.");
-      return false;
+    if (accept) {
+      const tokens = accept
+        .split(",")
+        .map((x) => x.trim().toLowerCase())
+        .filter(Boolean);
+
+      const allowedMimes = new Set(tokens.filter((t) => !t.startsWith(".")));
+      const allowedExts = new Set(tokens.filter((t) => t.startsWith(".")));
+
+      const mimeOk = next.type ? allowedMimes.has(next.type.toLowerCase()) : false;
+      const ext = (() => {
+        const idx = next.name.lastIndexOf(".");
+        return idx >= 0 ? next.name.slice(idx).toLowerCase() : "";
+      })();
+      const extOk = ext ? allowedExts.has(ext) : false;
+
+      // Some browsers/files may have an empty mime type; allow by extension as a fallback.
+      if (!mimeOk && !extOk) {
+        setError("Only PDF, PNG, JPG, or JPEG files are supported.");
+        return false;
+      }
     }
 
     if (next.size > maxBytes) {
@@ -100,10 +120,10 @@ export function FileDropzone({
         <div className="flex items-start justify-between gap-6">
           <div>
             <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
-              Upload a Bill of Lading (PDF)
+              Upload a Bill of Lading (PDF or image)
             </h2>
             <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-              Drag and drop a PDF here, or click to browse.
+              Drag and drop a PDF/PNG/JPG here, or click to browse.
             </p>
             <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-500">
               Max size: {formatBytes(maxBytes)}
