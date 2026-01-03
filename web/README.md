@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Document Intelligence — Web UI
 
-## Getting Started
+This folder contains the **TypeScript / Next.js** frontend for the AI Document Intelligence API.
 
-First, run the development server:
+The UI provides a polished workflow to:
+
+- Upload a Bill of Lading (PDF)
+- Submit an extraction request
+- Inspect extracted JSON, validation errors/warnings, and request metadata
+
+## Architecture
+
+The frontend talks to the backend through **Next.js API routes** (a server-side proxy). This avoids browser CORS issues and keeps backend details configurable via environment variables.
+
+- **Proxy health:** `GET /api/health` → `${BACKEND_URL}/health`
+- **Proxy extraction:** `POST /api/extractions` → `${BACKEND_URL}/v1/extractions` (multipart form upload)
+
+## Prerequisites
+
+- Node.js (recommended: current LTS)
+- A running backend API (FastAPI)
+
+## Configuration
+
+Create `web/.env.local`:
+
+```bash
+BACKEND_URL=http://127.0.0.1:8000
+```
+
+Or copy the example:
+
+```bash
+cp .env.local.example .env.local
+```
+
+## Run locally
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Start the dev server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run dev    # start dev server
+npm run build  # production build
+npm run start  # run production server
+npm run lint   # lint
+```
 
-## Learn More
+## Project layout
 
-To learn more about Next.js, take a look at the following resources:
+```text
+src/
+  app/                # Next.js App Router pages + API proxy routes
+  components/         # UI components
+  lib/                # fetch helpers + shared types
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Troubleshooting
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Backend unreachable**
+  - Verify the backend is running and `BACKEND_URL` is correct.
+  - If the UI shows “Backend unreachable”, open `http://localhost:3000/api/health` to see the proxy response.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Uploads fail / 413 (Payload Too Large)**
+  - The backend may enforce a maximum file size.
+  - Try a smaller PDF or adjust backend limits if needed.
