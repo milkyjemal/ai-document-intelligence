@@ -18,3 +18,17 @@ export type ExtractionResponse = {
   validation: APIValidation | null;
   meta: APIMeta;
 };
+
+export type JobStatus = "queued" | "running" | "completed" | "failed";
+
+export type JobCreateResponse = {
+  job_id: string;
+  status: JobStatus;
+};
+
+export type JobGetResponse = {
+  job_id: string;
+  status: JobStatus;
+  result: ExtractionResponse | null;
+  error: string | null;
+};

@@ -142,7 +142,7 @@ Open http://localhost:3000
 
 ## API Usage
 
-### Example Request (curl)
+### Synchronous extraction (default)
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/v1/extractions" \
@@ -156,6 +156,42 @@ Image uploads are also supported:
 curl -X POST "http://127.0.0.1:8000/v1/extractions" \
   -F "schema_name=bol_v1" \
   -F "file=@samples/sample_bol.jpg;type=image/jpeg"
+```
+
+### Asynchronous extraction (returns job id)
+
+Pass `async_mode=true` to return `202 Accepted` and a `job_id`.
+
+```bash
+curl -X POST "http://127.0.0.1:8000/v1/extractions?async_mode=true" \
+  -F "schema_name=bol_v1" \
+  -F "file=@samples/TFF-BOL-Form.pdf;type=application/pdf"
+```
+
+Example 202 response:
+
+```json
+{
+  "job_id": "0f8e7d...",
+  "status": "queued"
+}
+```
+
+### Get async job status
+
+```bash
+curl -X GET "http://127.0.0.1:8000/v1/extractions/<job_id>"
+```
+
+When the job is complete, the response includes the full extraction result:
+
+```json
+{
+  "job_id": "0f8e7d...",
+  "status": "completed",
+  "result": { "status": "completed", "job_id": null, "data": {}, "validation": {}, "meta": {} },
+  "error": null
+}
 ```
 
 ### Example Response (trimmed)
@@ -268,7 +304,7 @@ This is intentionally not a toy project.
 
 ## Future Improvements
 
-- Async job queue
+- Persistent async job queue (Redis / SQS) + worker pool
 - Webhooks
 - Multiple document schemas
 - Rate limiting & authentication

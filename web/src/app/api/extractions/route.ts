@@ -9,6 +9,7 @@ function getBackendUrl(): string {
 
 export async function POST(req: Request) {
   const backendUrl = getBackendUrl();
+  const url = new URL(req.url);
 
   let incoming: FormData;
   try {
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
 
   let upstream: Response;
   try {
-    upstream = await fetch(`${backendUrl}/v1/extractions`, {
+    upstream = await fetch(`${backendUrl}/v1/extractions${url.search}`, {
       method: "POST",
       body: outgoing,
     });
@@ -38,12 +39,17 @@ export async function POST(req: Request) {
 
   const contentType = upstream.headers.get("content-type") ?? "";
   const requestId = upstream.headers.get("x-request-id") ?? undefined;
+  const jobId = upstream.headers.get("x-job-id") ?? undefined;
+  const headers = {
+    ...(requestId ? { "x-request-id": requestId } : {}),
+    ...(jobId ? { "x-job-id": jobId } : {}),
+  };
 
   if (contentType.includes("application/json")) {
     const json = await upstream.json().catch(() => null);
     return NextResponse.json(json, {
       status: upstream.status,
-      headers: requestId ? { "x-request-id": requestId } : undefined,
+      headers: Object.keys(headers).length ? headers : undefined,
     });
   }
 
@@ -52,7 +58,7 @@ export async function POST(req: Request) {
     { error: "Unexpected backend response", status: upstream.status, body: text },
     {
       status: 502,
-      headers: requestId ? { "x-request-id": requestId } : undefined,
+      headers: Object.keys(headers).length ? headers : undefined,
     },
   );
 }

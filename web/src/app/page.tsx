@@ -3,7 +3,7 @@
 import * as React from "react";
 
 import type { ExtractionResponse } from "@/lib/types";
-import { extractDocument } from "@/lib/extract";
+import { pollExtractionJob, startExtraction } from "@/lib/extract";
 import { TopBar } from "@/components/TopBar";
 import { FileDropzone } from "@/components/FileDropzone";
 import { PrimaryButton } from "@/components/PrimaryButton";
@@ -18,10 +18,13 @@ type Tab = "extracted" | "meta" | "raw";
 export default function Home() {
   const [schemaName, setSchemaName] = React.useState("bol_v1");
   const [file, setFile] = React.useState<File | null>(null);
+  const [asyncMode, setAsyncMode] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [result, setResult] = React.useState<ExtractionResponse | null>(null);
   const [requestId, setRequestId] = React.useState<string | undefined>(undefined);
+  const [jobId, setJobId] = React.useState<string | null>(null);
+  const [jobStatus, setJobStatus] = React.useState<string | null>(null);
   const [tab, setTab] = React.useState<Tab>("extracted");
 
   async function run() {
@@ -34,12 +37,24 @@ export default function Home() {
     setError(null);
     setResult(null);
     setRequestId(undefined);
+    setJobId(null);
+    setJobStatus(null);
     setTab("extracted");
 
     try {
-      const r = await extractDocument({ schemaName, file });
-      setResult(r.response);
-      setRequestId(r.requestId);
+      const started = await startExtraction({ schemaName, file, asyncMode });
+
+      if (started.mode === "sync") {
+        setResult(started.response);
+        setRequestId(started.requestId);
+      } else {
+        setJobId(started.jobId);
+        setJobStatus(started.status);
+        const completed = await pollExtractionJob(started.jobId, {
+          onStatus: (s) => setJobStatus(s),
+        });
+        setResult(completed);
+      }
     } catch (e) {
       const message = e instanceof Error ? e.message : "Request failed";
       setError(message);
@@ -52,6 +67,8 @@ export default function Home() {
     setError(null);
     setResult(null);
     setRequestId(undefined);
+    setJobId(null);
+    setJobStatus(null);
     setTab("extracted");
   }
 
@@ -85,6 +102,24 @@ export default function Home() {
                 >
                   <option value="bol_v1">bol_v1</option>
                 </select>
+
+                <div className="mt-4 flex items-start gap-3 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-3 dark:border-zinc-800 dark:bg-zinc-900/30">
+                  <input
+                    id="async-mode"
+                    type="checkbox"
+                    checked={asyncMode}
+                    onChange={(e) => setAsyncMode(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-400 dark:border-zinc-700 dark:bg-zinc-950"
+                  />
+                  <div>
+                    <label htmlFor="async-mode" className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                      Run asynchronously
+                    </label>
+                    <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                      Returns a job id immediately and the UI polls until completion.
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <FileDropzone file={file} onChange={setFile} />
@@ -108,6 +143,16 @@ export default function Home() {
                 <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-950 dark:border-rose-950/60 dark:bg-rose-950/30 dark:text-rose-100">
                   <p className="font-semibold">Request failed</p>
                   <p className="mt-1">{error}</p>
+                </div>
+              ) : null}
+
+              {loading && jobId ? (
+                <div className="rounded-2xl border border-zinc-200 bg-white p-4 text-sm text-zinc-900 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50">
+                  <p className="font-semibold">Job in progress</p>
+                  <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                    job_id: <span className="font-mono">{jobId}</span>
+                  </p>
+                  <p className="mt-2">Status: {jobStatus ?? "queued"}</p>
                 </div>
               ) : null}
             </div>
