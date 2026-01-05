@@ -73,7 +73,7 @@ async def create_extraction(
     async_mode: bool = Query(False, description="If true, returns 202 + job_id and runs extraction in background"),
     schema_name: str = Form("bol_v1"),
     file: UploadFile = File(...),
-):
+    ):
     if schema_name != "bol_v1":
         raise HTTPException(status_code=400, detail="Unsupported schema")
 
